@@ -5,8 +5,13 @@ from enum import Enum, auto
 
 pygame.init()
 
-screen_width = 800
-screen_height = 600
+# screen_width = 800
+# screen_height = 600
+
+# Dimensions
+# 480p 9:16 to try and make the window have a similar aspect ratio to the game space alley
+screen_width = 480
+screen_height = 854
 
 screen = pygame.display.set_mode((screen_width, screen_height))
 background = pygame.image.load('assets/bowling-alley.jpg')
@@ -68,6 +73,7 @@ class Ball:
                 self.state = BallState.FINISHED
                 self.y = LANE_LENGTH
             if self.x < LEFT_BOUNDARY or self.x > RIGHT_BOUNDARY:  # If the ball goes into the gutter, ...
+                print(f"GUTTER! x={self.x}")
                 self.state = BallState.IN_GUTTER
             if False:  # If the ball goes directly out of bounds, ...
                 self.state = BallState.OUT_OF_BOUNDS
@@ -75,44 +81,29 @@ class Ball:
                 if False:  # If the ball hits a pin, ...
                     pass
             print(self.x, self.y)
+        self.img.calculate_pos()
+
+
 
 class BallImage:
     """Represents the ball's image, which is displayed on the screen, corresponding to self.ball's co-ordinates."""
 
     def __init__(self, ball):
         self.ball = ball
-        self.scale = 1
-        self.unscaled_img = pygame.image.load('assets/ball_blue_large.png')
-        # self.img = pygame.transform.rotozoom(
-        #     self.unscaled_img,
-        #     0,
-        #     self.scale
-        # )
-        # self.img = self.unscaled_img
-        new_size = (self.unscaled_img.get_width() * self.scale,
-                    self.unscaled_img.get_height() * self.scale)
-        self.img = pygame.transform.scale(self.unscaled_img, new_size)
+        self.img = pygame.image.load('assets/ball_blue_large.png')
         self.width = self.img.get_width()
         self.height = self.img.get_height()
         self.x = (screen_width / 2) - (self.width / 2)
-        self.y = 500
-        self.x_change = 0
-        self.y_change = 0
+        self.y = screen_height - (self.height / 2)
 
     def update(self):
-        new_size = (self.unscaled_img.get_width() * self.scale,
-                    self.unscaled_img.get_height() * self.scale)
-        self.img = pygame.transform.scale(self.unscaled_img, new_size)
-        self.width = self.img.get_width()
-        self.height = self.img.get_height()
+        pass
 
-    def change_scale(self, scale):
-        if scale == 0:
-            return
-        new_scale = self.scale + scale
-        if new_scale > 0:
-            self.scale = new_scale
-            self.update()
+    def calculate_pos(self):
+        print(f"Ball game pos: ({self.ball.x}, {self.ball.y})")
+        self.x = (screen_width / 2) + (self.ball.x * (screen_width / LANE_WIDTH)) - (self.width / 2)
+        self.y = (screen_height - (self.height / 2)) - (self.ball.y * (screen_height / LANE_LENGTH))
+        print(f"Ball screen pos: ({self.x}, {self.y})")
 
     def display(self):
         screen.blit(self.img, (self.x, self.y))
@@ -120,6 +111,8 @@ class BallImage:
 
 class TrajectoryLine:
     """Represents the trajectory line, which is a line that shows the ball's predicted trajectory."""
+
+    LENGTH = 500
 
     def __init__(self, ball):
         self.ball = ball
@@ -129,16 +122,27 @@ class TrajectoryLine:
         self.calculate_pos()
 
     def change_angle(self, angle):
-        self.__angle += angle
-        self.calculate_pos()
+        new_angle = self.__angle + angle
+        if -5 <= new_angle <= 5:
+            self.__angle = new_angle
+            print(self.__angle)
+            self.calculate_pos()
+
+    def get_angle(self):
+        return self.__angle
 
     def calculate_pos(self):
-        start_pos_x = self.ball.img.x + (self.ball.img.width / 2)
-        start_pos_y = self.ball.img.y
-        self.start_pos = (start_pos_x, start_pos_y)
-        end_pos_x = start_pos_x + 200 * math.sin(math.radians(self.__angle))
-        end_pos_y = start_pos_y - 200 * math.cos(math.radians(self.__angle))
-        self.end_pos = (end_pos_x, end_pos_y)
+        start_x = self.ball.x
+        start_y = self.ball.y
+        screen_start_x = (screen_width / 2) + (start_x * (screen_width / LANE_WIDTH))
+        screen_start_y = screen_height - (start_y * (screen_height / LANE_LENGTH))  # - (self.ball.img.height / 4)
+        self.start_pos = (screen_start_x, screen_start_y)
+        end_x = self.ball.x + self.LENGTH * math.sin(math.radians(self.__angle))
+        end_y = self.ball.y + self.LENGTH * math.cos(math.radians(self.__angle))
+        screen_end_x = (screen_width / 2) + (end_x * (screen_width / LANE_WIDTH))
+        screen_end_y = screen_height - (end_y * (screen_height / LANE_LENGTH))
+        self.end_pos = (screen_end_x, screen_end_y)
+        print(f"Angle: {self.__angle}, end_y (game): {end_y}, end_y (screen): {screen_end_y}")
 
     def display(self):
         pygame.draw.line(screen, (255, 0, 0), self.start_pos, self.end_pos, 5)
@@ -168,29 +172,21 @@ def main():
     frame_count = 0
     while running:
         screen.fill((255, 255, 255))
-        screen.blit(background, (0, 0))
+        # screen.blit(background, (0, 0))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    ball.throw(0, 10)
+                    ball.throw(trajectory_line.get_angle(), 317)
                 if event.key == pygame.K_LEFT:
-                    trajectory_line.change_angle(-10)
+                    trajectory_line.change_angle(-0.5)
                 if event.key == pygame.K_RIGHT:
-                    trajectory_line.change_angle(10)
-        if ball.state == BallState.MOVING_IN_LANE and ball.img.y >= 150:
-            ball.img.y_change = -5
-            frame_count += 1
-            if frame_count % 1 == 0:  # Only rescale every 10 frames
-                ball.img.change_scale(-0.005)
-                ball.img.update()
-        else:
-            ball.img.y_change = 0
-        ball.img.y += ball.img.y_change
-        ball.img.display()
+                    trajectory_line.change_angle(0.5)
         if ball.state == BallState.STATIONARY:
             trajectory_line.display()
+        ball.img.display()
+        ball.img.calculate_pos()
         pygame.display.update()
         dt = clock.tick(FRAMES_PER_SECOND) / 1000.0  # Limits FPS to 60, dt is time in seconds since the last frame
         ball.update(dt)
