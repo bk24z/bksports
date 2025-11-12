@@ -5,18 +5,6 @@ from enum import Enum, auto
 
 pygame.init()
 
-# screen_width = 800
-# screen_height = 600
-
-# Dimensions
-# 480p 9:16 to try and make the window have a similar aspect ratio to the game space alley
-screen_width = 480
-screen_height = 854
-
-screen = pygame.display.set_mode((screen_width, screen_height))
-background = pygame.image.load('assets/bowling-alley.jpg')
-clock = pygame.time.Clock()
-
 FRAMES_PER_SECOND = 60
 
 # Measurements
@@ -24,13 +12,37 @@ FRAMES_PER_SECOND = 60
 LANE_WIDTH = 41.5
 GUTTER_WIDTH = 9.25
 ALLEY_WIDTH = LANE_WIDTH + GUTTER_WIDTH * 2
-LANE_LENGTH = 60 * 12  # 60 feet
+LANE_LENGTH = 65 * 12  # 90 feet TODO: Needs to be checked
+FOUL_LINE_TO_FRONT_PIN_DISTANCE = 60 * 12  # 60 feet
+FOUL_LINE_TO_END_DISTANCE = None
+APPROACH_LENGTH = 15 * 12  # 15 feet
 LEFT_BOUNDARY = -(LANE_WIDTH / 2)
 RIGHT_BOUNDARY = (LANE_WIDTH / 2)
 
-PIN_SPACING = 12  # Spacing between centres of pins
-PINS = []
+PIN_SPACING_H = 12  # Spacing between centres of pins
+HALF_PIN_SPACING_H = PIN_SPACING_H / 2
+PIN_SPACING_V = 20.75 / 2
 
+# Colours
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+GREEN = (0, 255, 0)
+BLUE = (0, 0, 255)
+
+screen_width = 1280
+screen_height = 720 * 1.2
+
+# Dimensions
+# 480p 9:16 to try and make the window have a similar aspect ratio to the game space alley
+# screen_width = 480
+# screen_height = 854
+# screen_width = LANE_WIDTH * 5
+# screen_height = LANE_LENGTH * 5
+
+screen = pygame.display.set_mode((screen_width, screen_height))
+background = pygame.image.load('assets/bowling-alley.jpg')
+clock = pygame.time.Clock()
 
 class BallState(Enum):
     STATIONARY = auto()
@@ -77,11 +89,11 @@ class Ball:
                 self.state = BallState.IN_GUTTER
             if False:  # If the ball goes directly out of bounds, ...
                 self.state = BallState.OUT_OF_BOUNDS
-            for pin in PINS:
-                if False:  # If the ball hits a pin, ...
-                    pass
+            # for pin in PINS:
+            #     if False:  # If the ball hits a pin, ...
+            #         pass
             print(self.x, self.y)
-        self.img.calculate_pos()
+        # self.img.calculate_pos()
 
 
 
@@ -96,16 +108,11 @@ class BallImage:
         self.x = (screen_width / 2) - (self.width / 2)
         self.y = screen_height - (self.height / 2)
 
-    def update(self):
-        pass
-
-    def calculate_pos(self):
-        print(f"Ball game pos: ({self.ball.x}, {self.ball.y})")
-        self.x = (screen_width / 2) + (self.ball.x * (screen_width / LANE_WIDTH)) - (self.width / 2)
-        self.y = (screen_height - (self.height / 2)) - (self.ball.y * (screen_height / LANE_LENGTH))
-        print(f"Ball screen pos: ({self.x}, {self.y})")
-
     def display(self):
+        print(f"Ball game pos: ({self.ball.x}, {self.ball.y})")
+        self.x, self.y = convert_game_to_screen_pos(self.ball.x, self.ball.y, offset_x=-self.width / 2,
+                                                    offset_y=-self.height / 2)
+        print(f"Ball screen pos: ({self.x}, {self.y})")
         screen.blit(self.img, (self.x, self.y))
 
 
@@ -134,15 +141,11 @@ class TrajectoryLine:
     def calculate_pos(self):
         start_x = self.ball.x
         start_y = self.ball.y
-        screen_start_x = (screen_width / 2) + (start_x * (screen_width / LANE_WIDTH))
-        screen_start_y = screen_height - (start_y * (screen_height / LANE_LENGTH))  # - (self.ball.img.height / 4)
-        self.start_pos = (screen_start_x, screen_start_y)
+        self.start_pos = convert_game_to_screen_pos(start_x, start_y)
         end_x = self.ball.x + self.LENGTH * math.sin(math.radians(self.__angle))
         end_y = self.ball.y + self.LENGTH * math.cos(math.radians(self.__angle))
-        screen_end_x = (screen_width / 2) + (end_x * (screen_width / LANE_WIDTH))
-        screen_end_y = screen_height - (end_y * (screen_height / LANE_LENGTH))
-        self.end_pos = (screen_end_x, screen_end_y)
-        print(f"Angle: {self.__angle}, end_y (game): {end_y}, end_y (screen): {screen_end_y}")
+        self.end_pos = convert_game_to_screen_pos(end_x, end_y)
+        print(f"Angle: {self.__angle}, end_y (game): {end_y}, end_pos (screen): {self.end_pos}")
 
     def display(self):
         pygame.draw.line(screen, (255, 0, 0), self.start_pos, self.end_pos, 5)
@@ -157,19 +160,47 @@ class Pin:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        pass
+        self.img = PinImage(self)
+
+    def hit(self):
+        self.img.color = RED
 
 
 class PinImage:
-    def __init__(self):
-        pass
+    def __init__(self, pin, x=None, y=None):
+        self.pin = pin
+        self.color = BLACK
+        self.x = x
+        self.y = y
 
+    def display(self):
+        self.x, self.y = convert_game_to_screen_pos(self.pin.x, self.pin.y)
+        pygame.draw.circle(screen, self.color, (self.x, self.y), 10)
+
+
+def convert_game_to_screen_pos(game_x, game_y, offset_x=0.0, offset_y=0.0):
+    screen_x = (screen_width / 2) + (game_x * (screen_width / LANE_WIDTH)) + offset_x
+    screen_y = screen_height - (game_y * (screen_height / LANE_LENGTH)) + offset_y
+    return screen_x, screen_y
 
 def main():
     ball = Ball()
     trajectory_line = TrajectoryLine(ball)
+    h = HALF_PIN_SPACING_H
+    v = PIN_SPACING_V
+    base_y = FOUL_LINE_TO_FRONT_PIN_DISTANCE
+    # pins = [
+    #     Pin(-h*2, base_y + v*2), Pin(6, FOUL_LINE_TO_FRONT_PIN_DISTANCE + PIN_SPACING_V * 2), Pin(HALF_PIN_SPACING_H * 2, FOUL_LINE_TO_FRONT_PIN_DISTANCE + PIN_SPACING_V * 2),
+    #     Pin(-HALF_PIN_SPACING_H, FOUL_LINE_TO_FRONT_PIN_DISTANCE + (20.75 / 2)), Pin(HALF_PIN_SPACING_H, FOUL_LINE_TO_FRONT_PIN_DISTANCE + (20.75 / 2)),
+    #     Pin(0, FOUL_LINE_TO_FRONT_PIN_DISTANCE),
+    # ]
+    pins = [
+        Pin(-h * 3, base_y + v * 3), Pin(-h, base_y + v * 3), Pin(h, base_y + v * 3), Pin(h * 3, base_y + v * 3),
+        Pin(-h * 2, base_y + v * 2), Pin(0, base_y + v * 2), Pin(h * 2, base_y + v * 2),
+        Pin(-h, base_y + v), Pin(h, base_y + v),
+        Pin(0, base_y),
+    ]
     running = True
-    frame_count = 0
     while running:
         screen.fill((255, 255, 255))
         # screen.blit(background, (0, 0))
@@ -186,7 +217,8 @@ def main():
         if ball.state == BallState.STATIONARY:
             trajectory_line.display()
         ball.img.display()
-        ball.img.calculate_pos()
+        for pin in pins:
+            pin.img.display()
         pygame.display.update()
         dt = clock.tick(FRAMES_PER_SECOND) / 1000.0  # Limits FPS to 60, dt is time in seconds since the last frame
         ball.update(dt)
