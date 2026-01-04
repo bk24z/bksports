@@ -42,12 +42,8 @@ class PinSet:
     """
 
     def __init__(self):
-        self.pins = None
-        self.reset()
-
-    def reset(self) -> None:
         """
-        Resets the set of pins to their default state (not being hit) and position.
+        Initialises the set of pins to their default state (not being hit) and position.
         """
         h = consts.HALF_PIN_SPACING_H
         v = consts.PIN_SPACING_V
