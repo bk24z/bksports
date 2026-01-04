@@ -1,9 +1,8 @@
 import math
 import pygame
 
-from src.constants import *
-
-from src.bowling.ball import *
+import src.constants as consts
+from src.bowling.ball import Ball, BallState
 from src.bowling.pin import Pin
 from src.bowling.trajectory import TrajectoryLine
 from src.bowling.conversions import convert_game_to_screen_pos
@@ -11,9 +10,9 @@ from src.bowling.conversions import convert_game_to_screen_pos
 # background = pygame.image.load('../../assets/background.jpg')
 
 def initialise_pins():
-    h = HALF_PIN_SPACING_H
-    v = PIN_SPACING_V
-    base_y = FOUL_LINE_TO_FRONT_PIN_DISTANCE
+    h = consts.HALF_PIN_SPACING_H
+    v = consts.PIN_SPACING_V
+    base_y = consts.FOUL_LINE_TO_FRONT_PIN_DISTANCE
     return [
         Pin(-h * 3, base_y + v * 3), Pin(-h, base_y + v * 3), Pin(h, base_y + v * 3), Pin(h * 3, base_y + v * 3),
         Pin(-h * 2, base_y + v * 2), Pin(0, base_y + v * 2), Pin(h * 2, base_y + v * 2),
@@ -23,33 +22,33 @@ def initialise_pins():
 
 def setup_bowling_scene(screen):
     # Fill the screen with a white background
-    screen.fill(WHITE)
+    screen.fill(consts.WHITE)
 
     # Calculate the alley and gutter dimensions
-    left_boundary_x, _ = convert_game_to_screen_pos(LEFT_BOUNDARY, 0)
-    right_boundary_x, _ = convert_game_to_screen_pos(RIGHT_BOUNDARY, 0)
-    left_gutter_x, _ = convert_game_to_screen_pos(LEFT_BOUNDARY - GUTTER_WIDTH, 0)
-    right_gutter_x, _ = convert_game_to_screen_pos(RIGHT_BOUNDARY, 0)
-    gutter_width = GUTTER_WIDTH * (ALLEY_SCREEN_WIDTH / LANE_WIDTH)
+    left_boundary_x, _ = convert_game_to_screen_pos(consts.LEFT_BOUNDARY, 0)
+    right_boundary_x, _ = convert_game_to_screen_pos(consts.RIGHT_BOUNDARY, 0)
+    left_gutter_x, _ = convert_game_to_screen_pos(consts.LEFT_BOUNDARY - consts.GUTTER_WIDTH, 0)
+    right_gutter_x, _ = convert_game_to_screen_pos(consts.RIGHT_BOUNDARY, 0)
+    gutter_width = consts.GUTTER_WIDTH * (consts.ALLEY_SCREEN_WIDTH / consts.LANE_WIDTH)
 
     # Draw the alley
-    pygame.draw.rect(screen, BUTCHER_BLOCK,
-                     pygame.Rect(left_boundary_x, 0, ALLEY_SCREEN_WIDTH, ALLEY_SCREEN_HEIGHT))
+    pygame.draw.rect(screen, consts.BUTCHER_BLOCK,
+                     pygame.Rect(left_boundary_x, 0, consts.ALLEY_SCREEN_WIDTH, consts.ALLEY_SCREEN_HEIGHT))
 
     # Draw the left gutter
-    pygame.draw.rect(screen, BLACK,
-                     pygame.Rect(left_gutter_x, 0, gutter_width, ALLEY_SCREEN_HEIGHT))
+    pygame.draw.rect(screen, consts.BLACK,
+                     pygame.Rect(left_gutter_x, 0, gutter_width, consts.ALLEY_SCREEN_HEIGHT))
 
     # Draw the right gutter
-    pygame.draw.rect(screen, BLACK,
-                     pygame.Rect(right_gutter_x, 0, gutter_width, ALLEY_SCREEN_HEIGHT))
+    pygame.draw.rect(screen, consts.BLACK,
+                     pygame.Rect(right_gutter_x, 0, gutter_width, consts.ALLEY_SCREEN_HEIGHT))
 
 
-BALL_SCREEN_RADIUS = Ball.RADIUS * (ALLEY_SCREEN_WIDTH / LANE_WIDTH)
+BALL_SCREEN_RADIUS = Ball.RADIUS * (consts.ALLEY_SCREEN_WIDTH / consts.LANE_WIDTH)
 BALL_SCREEN_WIDTH = BALL_SCREEN_RADIUS * 2
 BALL_SCREEN_HEIGHT = BALL_SCREEN_RADIUS * 2
 
-PIN_SCREEN_RADIUS = Pin.RADIUS * (ALLEY_SCREEN_WIDTH / LANE_WIDTH)
+PIN_SCREEN_RADIUS = Pin.RADIUS * (consts.ALLEY_SCREEN_WIDTH / consts.LANE_WIDTH)
 PIN_SCREEN_WIDTH = PIN_SCREEN_RADIUS * 2
 PIN_SCREEN_HEIGHT = PIN_SCREEN_RADIUS * 2
 
@@ -83,7 +82,7 @@ class BowlingGame:
         x, y = convert_game_to_screen_pos(self.ball.x, self.ball.y)
         # print(f"Ball screen pos: ({self.x}, {self.y})")
         # screen.blit(self.img, (self.x, self.y))
-        pygame.draw.circle(self.screen, LIGHT_BLUE, (x, y), BALL_SCREEN_RADIUS)
+        pygame.draw.circle(self.screen, consts.LIGHT_BLUE, (x, y), BALL_SCREEN_RADIUS)
 
     def throw_ball(self, velocity):
         self.ball.throw(self.throw_angle, velocity)
@@ -91,13 +90,13 @@ class BowlingGame:
     def display_pins(self):
         for pin in self.pins:
             x, y = convert_game_to_screen_pos(pin.x, pin.y)
-            color = RED if pin.hit else BLACK
+            color = consts.RED if pin.hit else consts.BLACK
             pygame.draw.circle(self.screen, color, (x, y), PIN_SCREEN_RADIUS)
 
     def update_pins(self):
         for pin in self.pins:
             x, y = convert_game_to_screen_pos(pin.x, pin.y)
-            color = RED if pin.hit else BLACK
+            color = consts.RED if pin.hit else consts.BLACK
             pygame.draw.circle(self.screen, color, (x, y), PIN_SCREEN_RADIUS)
             if pin.hit:
                 continue
@@ -137,5 +136,6 @@ class BowlingGame:
             self.display_ball()
             self.update_pins()
             pygame.display.update()
-            dt = self.clock.tick(FRAMES_PER_SECOND) / 1000.0  # Limits FPS to 60, dt is time in seconds since the last frame
+            dt = self.clock.tick(
+                consts.FRAMES_PER_SECOND) / 1000.0  # Limits FPS to 60, dt is time in seconds since the last frame
             self.ball.update(dt)
