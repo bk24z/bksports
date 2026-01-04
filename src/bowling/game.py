@@ -58,10 +58,25 @@ class BowlingGame:
         self.screen = screen
         self.clock = clock
         self.ball = Ball()
-        self.ball_angle = 0
+        self._throw_angle = 0
         self.pins = initialise_pins()
-        self.trajectory_line = TrajectoryLine(self.ball, self.screen, self.ball_angle)
+        self.trajectory_line = TrajectoryLine(self.ball, self.screen, self.throw_angle)
         self.running = True
+        self.frames = []
+        self.multiplier = 1
+
+    @property
+    def throw_angle(self):  # A getter to get the radius
+        return self._throw_angle
+
+    @throw_angle.setter
+    def throw_angle(self, value):  # A setter to set the radius
+        if -5 <= value <= 5:
+            self._throw_angle = value
+            self.trajectory_line.angle = value
+            self.trajectory_line.calculate_pos()
+        print(self.throw_angle)
+        print(self.trajectory_line.angle)
 
     def display_ball(self):
         # print(f"Ball game pos: ({self.ball.x}, {self.ball.y})")
@@ -70,21 +85,8 @@ class BowlingGame:
         # screen.blit(self.img, (self.x, self.y))
         pygame.draw.circle(self.screen, LIGHT_BLUE, (x, y), BALL_SCREEN_RADIUS)
 
-    def change_ball_angle(self, angle):
-        new_angle = self.ball_angle + angle
-        if -5 <= new_angle <= 5:
-            self.ball_angle = new_angle
-            self.trajectory_line.angle = self.ball_angle
-            self.trajectory_line.calculate_pos()
-        # self.ball_angle += angle
-        # self.ball.change_angle(angle)
-        # self.trajectory_line.angle = self.ball_angle
-        # self.trajectory_line.change_angle(angle)
-        print(self.ball_angle)
-        print(self.trajectory_line.angle)
-
     def throw_ball(self, velocity):
-        self.ball.throw(self.ball_angle, velocity)
+        self.ball.throw(self.throw_angle, velocity)
 
     def display_pins(self):
         for pin in self.pins:
@@ -108,8 +110,7 @@ class BowlingGame:
         pins_hit = len([1 for pin in self.pins if pin.hit])
         print(f"Finished! Pins hit: {pins_hit}")
         self.ball.__init__()  # Reset ball
-        pins = initialise_pins()
-        return pins
+        self.pins = initialise_pins()
 
     def run(self):
         while self.running:
@@ -124,15 +125,15 @@ class BowlingGame:
                     self.running = False
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
-                        self.ball.throw(self.ball_angle, 317)
+                        self.ball.throw(self.throw_angle, 317)
                     if event.key == pygame.K_LEFT:
-                        self.change_ball_angle(-0.5)
+                        self.throw_angle -= 0.5
                     if event.key == pygame.K_RIGHT:
-                        self.change_ball_angle(0.5)
+                        self.throw_angle += 0.5
             if self.ball.state == BallState.STATIONARY:
                 self.trajectory_line.display()
             if self.ball.state == BallState.FINISHED:
-                pins = self.end_frame()
+                self.end_frame()
             self.display_ball()
             self.update_pins()
             pygame.display.update()
