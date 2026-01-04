@@ -2,7 +2,7 @@ import pygame
 import time
 import math
 
-from constants import *
+from constants import SCREEN_WIDTH, SCREEN_HEIGHT
 from src.bowling.game import BowlingGame
 
 pygame.init()
