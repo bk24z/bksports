@@ -164,8 +164,9 @@ class ScoreKeeper:
         if frame[0] == 10:
             self.end_strike_frame()
         else:  # The first throw isn't a strike
+            spare_throws = frame[0:2]
             if sum(frame[0:2]) == 10:  # The first two throws sum to a spare
-                self.end_spare_frame(frame)
+                self.end_spare_frame(spare_throws)
                 self.end_open_frame([frame[-1], 0])  # Add the third throw to the frame
                 return
             else:  # The two throws leave an open frame
@@ -181,7 +182,7 @@ class ScoreKeeper:
         # Adjust each frame to make sure they don't exceed the limit of 30
         for frame in self.frames:
             frame_total = sum(frame)
-            if sum(frame) > 30:
+            if frame_total > 30:
                 self.scores.append(30 - frame_total)
 
     def calc_strikes_and_spares(self, frame: list[int]) -> None:
