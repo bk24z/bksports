@@ -5,7 +5,7 @@ class ScoreKeeper:
     :ivar raw_score_data: The list of individual scores for each throw. Contains `None` for incomplete scores.
     :ivar frame_indexes: Set of indexes marking the start of each frame within the scores list.
     :ivar frame_throws: List containing sublists, where each one represents the throws of a single frame.
-    :ivar current_frame_throws: The list of throws for the frame currently being played.
+    :ivar current_frame_throws: The list of throws for the frame that is currently being played.
     """
 
     def __init__(self) -> None:
@@ -28,16 +28,6 @@ class ScoreKeeper:
         :return: True if the number of frames is equal to 9, otherwise False.
         """
         return len(self.frame_score_data) == 10
-
-    # @property
-    # def finished(self) -> bool:
-    #     """
-    #     Indicates whether the game has finished by checking if the number of frames
-    #     is equal to 10 (the standard number of frames in a bowling game).
-    #
-    #     :return: True if the number of frames is equal to 10, otherwise False.
-    #     """
-    #     return len(self.frame_score_data) == 10
 
     @property
     def valid_scores(self) -> list[int]:
@@ -104,7 +94,7 @@ class ScoreKeeper:
         def check_throw() -> bool:
             """
             Helper function for add_throw(). Handles special cases (strike/spare/final frame),
-            adds the throw's score to the current frame, and ends the frame when neccesary.
+            adds the throw's score to the current frame, and ends the frame when necessary.
 
             :return: True if the current frame has been completed, otherwise False.
             """
@@ -140,6 +130,7 @@ class ScoreKeeper:
 
         frame_complete = check_throw()
         if frame_complete:
+            self.frame_throws.append(self.current_frame_throws)
             self.current_frame_throws = []  # Clear current throws if the frame is complete
             if self.is_last_frame:
                 # Adjust each frame to make sure they don't exceed the limit of 30
@@ -151,7 +142,14 @@ class ScoreKeeper:
                 self.finished = True
         return frame_complete
 
-    def add_throws(self, throws: list[int]):
+    def add_throws(self, throws: list[int]) -> bool:
+        """
+        Adds a list of throws to their respective frames by running add_throw
+        on each throw.
+
+        :param throws: A list of integers representing the throws to be added.
+        :return: True if the last throw completed its frame, otherwise False.
+        """
         status = False
         for throw in throws:
             status = self.add_throw(throw)
@@ -217,29 +215,20 @@ class ScoreKeeper:
         result = "\n"
         c_score = 0
         for i, frame in enumerate(self.frame_score_data):
-            c_frame_score = self.frame_score_data[i]
-            if c_frame_score is not None and c_score != -1:
-                c_score += c_frame_score
+            if None not in frame:
+                # TODO: Maybe optimise current score calculation to be more efficient
+                c_score += sum([score for score in frame if score is not None])
                 result += f"Frame {i + 1}:\n{self.frame_throws[i]} {c_score}\n"
             else:
-                c_score = -1
-                result += f"Frame {i + 1}:\n{self.frame_throws[i]} Uncalculated\n"
+                result += f"Frame {i + 1}:\n{self.frame_throws[i]} Uncalculated, more throws needed to calculate\n"
+                break
+        result += f"\nFinal score: {c_score}" if self.finished else "\nGame not finished"
         return result
 
 
 # Example game - https://bowlingforbeginners.com/how-is-bowling-scored/
 if __name__ == '__main__':
     sk = ScoreKeeper()
-    # sk.end_frame([6, 2])
-    # sk.end_frame([10])
-    # sk.end_frame([3, 2])
-    # sk.end_frame([5, 5])
-    # sk.end_frame([10])
-    # sk.end_frame([10])
-    # sk.end_frame([1, 4])
-    # sk.end_frame([9, 0])
-    # sk.end_frame([3, 2])
-    # sk.end_frame([10, 10, 10])
     sk.add_throws([6, 2])
     sk.add_throws([10])
     sk.add_throws([3, 2])
@@ -253,4 +242,5 @@ if __name__ == '__main__':
     print(sk.raw_score_data, sk.total_score)
     print(sk.frame_indexes)
     print(sk.frame_score_data)
-    # print(sk)
+    print(sk.frame_throws)
+    print(sk)
