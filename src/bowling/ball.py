@@ -36,10 +36,10 @@ class Ball:
     CIRCUMFERENCE = 2 * math.pi * RADIUS
 
     def __init__(self):
-        self.x = 0
-        self.y = 0
-        self.vx = 0
-        self.vy = 0
+        self.x = 0.0
+        self.y = 0.0
+        self.vx = 0.0
+        self.vy = 0.0
         self.state = BallState.STATIONARY
 
     def throw(self, angle: float, velocity: float) -> None:
