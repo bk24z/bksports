@@ -102,21 +102,23 @@ class ScoreKeeper:
             if self.is_last_frame:
                 # If the number of strikes in this frame (including this throw) is 2 or less
                 if score == 10 and len(self.current_frame_throws) <= 2:
-                    self.end_strike_frame()
+                    self.end_open_frame([10])
                     return False  # The final frame has not finished at this point
-                # If this throw is the 3rd throw in this frame
-                if len(self.current_frame_throws) == 3:
-                    self.end_open_frame([score, 0])  # Add the score of the last (current) throw to the frame
-                    return True  # The final frame has now finished
                 # If the current throw is the 2nd throw in the frame
                 # Either a spare or an open frame
-                if len(self.current_frame_throws) == 2:
-                    if sum(self.current_frame_throws) == 10:
-                        self.end_spare_frame(self.current_frame_throws)
+                non_10_throws = [throw for throw in self.current_frame_throws if throw != 10]
+                if len(non_10_throws) == 2:
+                    if sum(non_10_throws) == 10:
+                        self.end_spare_frame(non_10_throws)
+                        return True
                     else:
-                        self.end_open_frame(self.current_frame_throws)
+                        self.end_open_frame(non_10_throws)
                         return True  # The final frame has now finished
-            # If this is not in the last frame
+                # If this throw is the 3rd throw in this frame
+                if len(self.current_frame_throws) == 3:
+                    self.end_open_frame([score])  # Add the score of the last (current) throw to the frame
+                    return True  # The final frame has now finished
+            # If this throw is not in the last frame
             elif self.current_frame_throws == [10]:  # If this throw is a strike
                 self.end_strike_frame()
                 return True  # This frame has now ended
@@ -238,7 +240,7 @@ if __name__ == '__main__':
     sk.add_throws([1, 4])
     sk.add_throws([9, 0])
     sk.add_throws([3, 2])
-    print(sk.add_throws([10, 10, 10]))
+    print(sk.add_throws([10, 10, 1]))
     print(sk.raw_score_data, sk.total_score)
     print(sk.frame_indexes)
     print(sk.frame_score_data)
