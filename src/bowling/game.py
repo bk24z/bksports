@@ -134,6 +134,8 @@ class BowlingGame:
         in the game space.
         """
         for pin in self.pin_set.pins:
+            if pin.removed:
+                continue
             x, y = convert_game_to_screen_pos(pin.x, pin.y)
             color = consts.RED if pin.hit else consts.BLACK
             pygame.draw.circle(self.screen, color, (x, y), PIN_SCREEN_RADIUS)
@@ -172,6 +174,8 @@ class BowlingGame:
                             self.throw_angle = 0  # Reset throw angle
                             print(self.score_keeper)  # Show current game state TODO: Display on screen
                             self.frame_state = BowlingFrameState.END_OF_FRAME
+                        else:
+                            self.pin_set.clean_up()
                         self.ball = Ball()  # Reset ball
                         self.trajectory_line = TrajectoryLine(self.ball, self.screen,
                                                               self.throw_angle)  # Reset trajectory line

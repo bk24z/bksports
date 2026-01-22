@@ -25,6 +25,7 @@ class Pin:
         self.x = x
         self.y = y
         self.hit = False
+        self.removed = False
 
     def on_hit(self):
         self.hit = True
@@ -70,3 +71,8 @@ class PinSet:
             if ball_pin_distance < Pin.RADIUS + Ball.RADIUS:
                 pin.on_hit()
                 self.pins_hit += 1
+
+    def clean_up(self):
+        for pin in self.pins:
+            if pin.hit:
+                pin.removed = True
