@@ -38,7 +38,7 @@ class PinSet:
     It defines their positions and determines when they are hit by the bowling ball.
 
     :ivar pins: List of pins in the pin set. Each pin's state and position are managed individually.
-    :type pins: List of Pin objects
+    :ivar pins_hit: Stores the number of pins the ball hit in the current throw.
     """
 
     def __init__(self):
@@ -54,6 +54,7 @@ class PinSet:
             Pin(-h, base_y + v), Pin(h, base_y + v),
             Pin(0, base_y),
         ]
+        self.pins_hit = 0
 
     def update(self, ball: Ball) -> None:
         """
@@ -61,7 +62,6 @@ class PinSet:
         Pins that are hit by the ball within a specific radius are marked as hit.
 
         :param ball: The ball object whose position and radius are used to check for collisions with the pins.
-        :type ball: Ball
         """
         for pin in self.pins:
             if pin.hit:
@@ -69,3 +69,4 @@ class PinSet:
             ball_pin_distance = math.sqrt((ball.x - pin.x) ** 2 + (ball.y - pin.y) ** 2)
             if ball_pin_distance < Pin.RADIUS + Ball.RADIUS:
                 pin.on_hit()
+                self.pins_hit += 1
