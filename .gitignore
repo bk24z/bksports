@@ -1,4 +1,16 @@
-.venv/
+# IDE
+.idea/
 **/.idea/
+
+# macOS
 .DS_Store
-*.egg-info
+
+# Python
+.venv/
+**/.venv/
+*.egg-info/
+__pycache__/
+*.pyc
+
+# Env
+.env
