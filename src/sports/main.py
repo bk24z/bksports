@@ -1,7 +1,7 @@
 import pygame
 
 from constants import SCREEN_WIDTH, SCREEN_HEIGHT
-from src.sports.bowling.game import BowlingGame
+from sports.bowling.game import BowlingGame
 
 pygame.init()
 

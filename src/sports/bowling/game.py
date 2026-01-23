@@ -1,12 +1,12 @@
 from enum import Enum, auto
 import pygame
 
-import src.sports.constants as consts
-from src.sports.bowling.ball import Ball, BallState
-from src.sports.bowling.pin import Pin, PinSet
-from src.sports.bowling.score_keeper import ScoreKeeper
-from src.sports.bowling.trajectory import TrajectoryLine
-from src.sports.bowling.conversions import convert_game_to_screen_pos
+import sports.constants as consts
+from sports.bowling.ball import Ball, BallState
+from sports.bowling.pin import Pin, PinSet
+from sports.bowling.score_keeper import ScoreKeeper
+from sports.bowling.trajectory import TrajectoryLine
+from sports.bowling.conversions import convert_game_to_screen_pos
 
 
 # background = pygame.image.load('../../assets/background.jpg')
