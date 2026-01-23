@@ -1,8 +1,14 @@
 import math
+from enum import Enum, auto
 
-import src.constants as consts
-from src.bowling.ball import Ball
+import src.sports.constants as consts
+from src.sports.bowling.ball import Ball
 
+
+class PinState(Enum):
+    STANDING = auto()
+    FALLING = auto()
+    KNOCKED = auto()
 
 class Pin:
     """

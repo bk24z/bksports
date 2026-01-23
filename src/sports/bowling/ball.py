@@ -1,7 +1,7 @@
 import math
 from enum import Enum, auto
 
-import src.constants as consts
+import src.sports.constants as consts
 
 
 class BallState(Enum):

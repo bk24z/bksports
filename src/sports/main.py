@@ -1,9 +1,7 @@
 import pygame
-import time
-import math
 
 from constants import SCREEN_WIDTH, SCREEN_HEIGHT
-from src.bowling.game import BowlingGame
+from src.sports.bowling.game import BowlingGame
 
 pygame.init()
 
