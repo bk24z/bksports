@@ -6,3 +6,6 @@ build-backend = "setuptools.build_meta"
 name = "bk-sports-makerspace"
 version = "0.0.1"
 dependencies = ["pygame"]
+
+[project.scripts]
+start = "sports.__main__:main"
