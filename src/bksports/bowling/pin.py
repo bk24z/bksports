@@ -1,8 +1,8 @@
 import math
 from enum import Enum, auto
 
-import sports.constants as consts
-from sports.bowling.ball import Ball
+import bksports.constants as consts
+from bksports.bowling.ball import Ball
 
 
 class PinState(Enum):

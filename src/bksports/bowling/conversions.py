@@ -1,4 +1,4 @@
-from sports.constants import SCREEN_WIDTH, ALLEY_SCREEN_WIDTH, ALLEY_SCREEN_HEIGHT, LANE_WIDTH, LANE_LENGTH
+from bksports.constants import SCREEN_WIDTH, ALLEY_SCREEN_WIDTH, ALLEY_SCREEN_HEIGHT, LANE_WIDTH, LANE_LENGTH
 
 
 def convert_game_to_screen_pos(

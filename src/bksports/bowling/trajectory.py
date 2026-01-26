@@ -1,7 +1,7 @@
 import pygame
 import math
 
-from sports.bowling.conversions import convert_game_to_screen_pos
+from bksports.bowling.conversions import convert_game_to_screen_pos
 
 
 class TrajectoryLine:
