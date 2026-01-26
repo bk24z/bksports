@@ -1,11 +1,17 @@
-[build-system]
-requires = ["setuptools"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "bksports"
-version = "0.0.1"
+version = "0.1.0"
+description = "My project for the Edinburgh Informatics Makerspace Student Technician Award."
+readme = "README.md"
+authors = [
+    { name = "bk24z", email = "bradsthedeveloper@gmail.com" }
+]
+requires-python = ">=3.14"
 dependencies = ["pygame"]
+
+[build-system]
+requires = ["uv_build>=0.9.26,<0.10.0"]
+build-backend = "uv_build"
 
 [project.scripts]
 start = "sports.__main__:main"
