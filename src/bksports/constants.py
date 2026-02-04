@@ -51,3 +51,7 @@ PIN_SPACING_V = 20.75 / 2  # Spacing between rows of pins TODO: Change back to 2
 
 ALLEY_SCREEN_HEIGHT = SCREEN_HEIGHT
 ALLEY_SCREEN_WIDTH = ALLEY_SCREEN_HEIGHT * (LANE_WIDTH / LANE_LENGTH)  # Aspect ratio maintained
+
+# === Pymunk Constants ===
+BALL_ID = 0
+HIT_PIN_ID = 11
