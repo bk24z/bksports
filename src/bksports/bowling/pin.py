@@ -1,16 +1,10 @@
 import math
 from enum import Enum, auto
+from typing import Any
 
 import pymunk
 
 import bksports.constants as consts
-from bksports.bowling.ball import Ball
-
-
-class PinState(Enum):
-    STANDING = auto()
-    FALLING = auto()
-    KNOCKED = auto()
 
 
 class Pin:
@@ -32,6 +26,7 @@ class Pin:
     MASS = 1.55  # kg
 
     def __init__(self, x: float, y: float) -> None:
+        """Intialises a pin at a specific position."""
         self.removed = False
         self.body = pymunk.Body()
         self.body.position = (x, y)
@@ -43,28 +38,42 @@ class Pin:
 
     @property
     def x(self) -> float:
-        return self.shape.body.position.x
+        """Returns the x-coordinate of the pin's current position."""
+        return self.body.position.x
 
     @property
     def y(self) -> float:
-        return self.shape.body.position.y
+        """Returns the y-coordinate of the pin's current position."""
+        return self.body.position.y
 
     @property
     def vx(self) -> float:
-        return self.shape.body.velocity.x
+        """Returns the x-component of the pin's current velocity."""
+        return self.body.velocity.x
 
     @property
     def vy(self) -> float:
-        return self.shape.body.velocity.y
+        """Returns the y-component of the pin's current velocity."""
+        return self.body.velocity.y
 
     @property
     def hit(self) -> bool:
+        """
+        Indicates whether the pin has been hit.
+
+        A pin is determined as hit if its collision type is equal to the value of the HIT_PIN_ID constant,
+        which indicates that the pin has collided with the ball or another pin, and has therefore been hit.
+        """
         return self.shape.collision_type == consts.HIT_PIN_ID
 
-    def on_hit(self, arbiter, space, data) -> bool:  # noqa: ANN001
-        self.shape.collision_type = consts.HIT_PIN_ID  # Signifies that the pin has already been hit, collision detection no longer needed
+    def on_hit(self, arbiter: pymunk.Arbiter, space: pymunk.Space, data: Any) -> bool:  # noqa: ANN401
+        self.shape.collision_type = (
+            consts.HIT_PIN_ID  # Signifies that the pin has already been hit, collision detection no longer needed
+        )
         print(f"Pin hit at ({self.x}, {self.y})")
-        return True
+        return (
+            True  # The collision should be processed normally and should not be ignored
+        )
 
 
 class PinSet:
@@ -122,23 +131,8 @@ class PinSet:
             # Add each pin's body and shape to the space
             self.space.add(pin.body, pin.shape)
 
-    def update(self, ball: Ball) -> None:
-        """
-        Updates the state of the pins based on the position of the ball.
-
-        Pins that are hit by the ball within a specific radius are marked as hit.
-
-        :param ball: The ball object whose position and radius are used to check for collisions with the pins.
-        """
-        for pin in self.pins:
-            if pin.hit:
-                continue
-            ball_pin_distance = math.sqrt((ball.x - pin.x) ** 2 + (ball.y - pin.y) ** 2)
-            if ball_pin_distance < Pin.RADIUS + Ball.RADIUS:
-                pin.on_hit()
-                self.pins_hit += 1
-
     def clean_up(self) -> None:
+        """Clean up pins that have been hit by marking them as removed."""
         for pin in self.pins:
             if pin.hit:
                 pin.removed = True
