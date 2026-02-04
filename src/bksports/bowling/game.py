@@ -1,46 +1,61 @@
 from enum import Enum, auto
+
 import pygame
+import pymunk
 
 import bksports.constants as consts
 from bksports.bowling.ball import Ball, BallState
+from bksports.bowling.conversions import convert_game_to_screen_pos
 from bksports.bowling.pin import Pin, PinSet
 from bksports.bowling.score_keeper import ScoreKeeper
 from bksports.bowling.trajectory import TrajectoryLine
-from bksports.bowling.conversions import convert_game_to_screen_pos
-
 
 # background = pygame.image.load('../../assets/background.jpg')
 
+
 def setup_bowling_scene(screen: pygame.Surface) -> None:
     """
-    Sets up the bowling scene by rendering the background, alley, and gutters
-    on the provided screen.
+    Sets up the bowling scene.
+
+    Renders the background, alley, and gutters on the provided screen.
 
     :param screen: The screen surface where the bowling scene will be drawn.
     :type screen: pygame.Surface
     """
-
     # Fill the screen with a white background
     screen.fill(consts.WHITE)
 
     # Calculate the alley and gutter dimensions
     left_boundary_x, _ = convert_game_to_screen_pos(consts.LEFT_BOUNDARY, 0)
     right_boundary_x, _ = convert_game_to_screen_pos(consts.RIGHT_BOUNDARY, 0)
-    left_gutter_x, _ = convert_game_to_screen_pos(consts.LEFT_BOUNDARY - consts.GUTTER_WIDTH, 0)
+    left_gutter_x, _ = convert_game_to_screen_pos(
+        consts.LEFT_BOUNDARY - consts.GUTTER_WIDTH, 0
+    )
     right_gutter_x, _ = convert_game_to_screen_pos(consts.RIGHT_BOUNDARY, 0)
     gutter_width = consts.GUTTER_WIDTH * (consts.ALLEY_SCREEN_WIDTH / consts.LANE_WIDTH)
 
     # Draw the alley
-    pygame.draw.rect(screen, consts.BUTCHER_BLOCK,
-                     pygame.Rect(left_boundary_x, 0, consts.ALLEY_SCREEN_WIDTH, consts.ALLEY_SCREEN_HEIGHT))
+    pygame.draw.rect(
+        screen,
+        consts.BUTCHER_BLOCK,
+        pygame.Rect(
+            left_boundary_x, 0, consts.ALLEY_SCREEN_WIDTH, consts.ALLEY_SCREEN_HEIGHT
+        ),
+    )
 
     # Draw the left gutter
-    pygame.draw.rect(screen, consts.BLACK,
-                     pygame.Rect(left_gutter_x, 0, gutter_width, consts.ALLEY_SCREEN_HEIGHT))
+    pygame.draw.rect(
+        screen,
+        consts.BLACK,
+        pygame.Rect(left_gutter_x, 0, gutter_width, consts.ALLEY_SCREEN_HEIGHT),
+    )
 
     # Draw the right gutter
-    pygame.draw.rect(screen, consts.BLACK,
-                     pygame.Rect(right_gutter_x, 0, gutter_width, consts.ALLEY_SCREEN_HEIGHT))
+    pygame.draw.rect(
+        screen,
+        consts.BLACK,
+        pygame.Rect(right_gutter_x, 0, gutter_width, consts.ALLEY_SCREEN_HEIGHT),
+    )
 
 
 BALL_SCREEN_RADIUS = Ball.RADIUS * (consts.ALLEY_SCREEN_WIDTH / consts.LANE_WIDTH)
@@ -87,8 +102,10 @@ class BowlingGame:
         self.clock = clock
         self.frame_state = BowlingFrameState.WAITING_FOR_THROW
         self._throw_angle = 0.0
-        self.ball = Ball()
-        self.pin_set = PinSet()
+        self.space = pymunk.Space()
+        self.space.gravity = (0, 0)
+        self.ball = Ball(self.space)
+        self.pin_set = PinSet(self.space)
         self.trajectory_line = TrajectoryLine(self.ball, self.screen, self.throw_angle)
         self.score_keeper = ScoreKeeper()
 
@@ -104,9 +121,11 @@ class BowlingGame:
     @throw_angle.setter
     def throw_angle(self, value: float) -> None:
         """
-        Sets the throw angle to a new value, sets the trajectory line's angle to
-        the same value, and recalculates the trajectory line's position if that
-        new value is valid (it must be within the range -5 to 5 inclusive).
+        Handles changing the throw angle to a new value.
+
+        Sets the throw angle to a new value, sets the trajectory line's angle to the same value, and
+        recalculates the trajectory line's position if that new value is valid (it must be within the range
+        -5 to 5 inclusive).
 
         :param value: The new value for the throw angle.
         """
@@ -118,10 +137,7 @@ class BowlingGame:
         # print(self.trajectory_line.angle)
 
     def display_ball(self) -> None:
-        """
-        Displays the ball on the screen, at a position relative to its coordinates
-        in the game space.
-        """
+        """Displays the ball on the screen, at a position relative to its coordinates in the game space."""
         # print(f"Ball game pos: ({self.ball.x}, {self.ball.y})")
         x, y = convert_game_to_screen_pos(self.ball.x, self.ball.y)
         # print(f"Ball screen pos: ({self.x}, {self.y})")
@@ -129,10 +145,7 @@ class BowlingGame:
         pygame.draw.circle(self.screen, consts.LIGHT_BLUE, (x, y), BALL_SCREEN_RADIUS)
 
     def display_pins(self) -> None:
-        """
-        Displays the pins on the screen, at positions relative to their coordinates
-        in the game space.
-        """
+        """Displays the pins on the screen, at positions relative to their coordinates in the game space."""
         for pin in self.pin_set.pins:
             if pin.removed:
                 continue
@@ -142,9 +155,10 @@ class BowlingGame:
 
     def run(self) -> None:
         """
-        Executes the main game loop, looping through listening for keystroke events,
-        displaying elements on screen, and updating game state accordingly while the
-        game is running. Also limits the game to run at 60fps.
+        Executes the main game loop.
+
+        Loops through listening for keystroke events, displaying elements on screen, and updating game state
+        accordingly while the game is running. Also limits the game to run at 60fps.
         """
         while self.running:
             # If the game is in progress
@@ -172,21 +186,26 @@ class BowlingGame:
                         if self.score_keeper.add_throw(self.pin_set.pins_hit):
                             self.pin_set = PinSet()  # Reset pins
                             self.throw_angle = 0  # Reset throw angle
-                            print(self.score_keeper)  # Show current game state TODO: Display on screen
+                            print(
+                                self.score_keeper
+                            )  # Show current game state TODO: Display on screen
                             self.frame_state = BowlingFrameState.END_OF_FRAME
                         else:
                             self.pin_set.clean_up()
                         self.ball = Ball()  # Reset ball
-                        self.trajectory_line = TrajectoryLine(self.ball, self.screen,
-                                                              self.throw_angle)  # Reset trajectory line
+                        self.trajectory_line = TrajectoryLine(
+                            self.ball, self.screen, self.throw_angle
+                        )  # Reset trajectory line
                         self.pin_set.pins_hit = 0
                     self.display_ball()
-                    self.pin_set.update(self.ball)
+                    # self.pin_set.update(self.ball)
                     self.display_pins()
                     pygame.display.update()
-                    dt = self.clock.tick(
-                        consts.FRAMES_PER_SECOND) / 1000.0  # Limits FPS to 60, dt is time in seconds since the last frame
-                    self.ball.update(dt)
+                    dt = (
+                            self.clock.tick(consts.FRAMES_PER_SECOND) / 1000.0
+                    )  # Limits FPS to 60, dt is time in seconds since the last frame
+                    # self.ball.update(dt)
+                    self.space.step(1 / consts.FRAMES_PER_SECOND)
                 # If the current frame has ended
                 elif self.frame_state == BowlingFrameState.END_OF_FRAME:
                     self.screen.fill(consts.WHITE)
@@ -196,10 +215,14 @@ class BowlingGame:
                         if event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                             self.frame_state = BowlingFrameState.WAITING_FOR_THROW
                     pygame.display.update()
+                    self.space.step(1 / consts.FRAMES_PER_SECOND)
             # If the game has finished
             else:
                 self.screen.fill(consts.BLACK)
                 for event in pygame.event.get():
-                    if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE):
+                    if event.type == pygame.QUIT or (
+                            event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE
+                    ):
                         self.running = False
                 pygame.display.update()
+                self.space.step(1 / consts.FRAMES_PER_SECOND)

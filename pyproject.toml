@@ -7,7 +7,11 @@ authors = [
     { name = "bk24z", email = "bradsthedeveloper@gmail.com" }
 ]
 requires-python = ">=3.14"
-dependencies = ["pygame"]
+dependencies = [
+    "pygame",
+    "pymunk>=7.2.0",
+    "ruff>=0.15.0",
+]
 
 [build-system]
 requires = ["uv_build>=0.9.26,<0.10.0"]
