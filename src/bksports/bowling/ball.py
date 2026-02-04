@@ -1,6 +1,7 @@
 import math
-import pymunk
 from enum import Enum, auto
+
+import pymunk
 
 import bksports.constants as consts
 
@@ -19,50 +20,58 @@ class Ball:
     """
     Represents a bowling ball and its attributes, including its physics, position, and state within the game space.
 
-    :ivar WEIGHT: The weight of the ball (currently undefined).
+    :ivar MASS: The weight of the ball (currently undefined).
     :ivar DIAMETER: The diameter of the ball.
     :ivar RADIUS: The radius of the ball, derived from its diameter.
     :ivar CIRCUMFERENCE: The circumference of the ball, derived from its radius.
-    :ivar x: The x-coordinate of the ball's position.
-    :ivar y: The y-coordinate of the ball's position.
-    :ivar vx: The velocity of the ball along the x-axis.
-    :ivar vy: The velocity of the ball along the y-axis.
-    :ivar state: The current state of the ball, which is an instance of the `BallState` enum.
+    :ivar state: The current state of the ball, which is an instance of the BallState enum.
+    :ivar body: The pymunk Body of the pin.
+    :ivar shape: The pymunk Shape of the pin.
     """
 
-    DIAMETER = 8.5
-    RADIUS = DIAMETER / 2
-    CIRCUMFERENCE = 2 * math.pi * RADIUS
+    MASS = 10  # kg
+    DIAMETER = 8.5  # inches
+    RADIUS = DIAMETER / 2  # inches
+    CIRCUMFERENCE = 2 * math.pi * RADIUS  # inches
 
     def __init__(self, space: pymunk.Space) -> None:
-        # self.x = 0.0
-        # self.y = 0.0
-        # self.vx = 0.0
-        # self.vy = 0.0
+        """
+        Intialises the ball and adds it to the pymunk Space.
+
+        :param space: The pymunk Space the game exists in.
+        """
         self.state = BallState.STATIONARY
         self.body = pymunk.Body()
         self.body.position = (0, 0)
         self.shape = pymunk.Circle(self.body, self.RADIUS)
-        self.shape.mass = 10  # TODO: Change value / add ball choice functionality
+        self.shape.mass = (
+            self.MASS
+        )  # TODO: Change value / add ball choice functionality
         self.shape.elasticity = 0.9
         self.shape.friction = 0.4
-        self.shape.collision_type = consts.BALL_ID  # Assign collision type ID 0 to the ball
+        self.shape.collision_type = (
+            consts.BALL_ID  # Assign collision type ID 0 to the ball
+        )
         space.add(self.body, self.shape)
 
     @property
-    def x(self):
+    def x(self) -> float:
+        """Returns the x-coordinate of the ball's current position."""
         return self.body.position.x
 
     @property
-    def y(self):
+    def y(self) -> float:
+        """Returns the y-coordinate of the ball's current position."""
         return self.body.position.y
 
     @property
-    def vx(self):
+    def vx(self) -> float:
+        """Returns the x-component of the ball's current velocity."""
         return self.body.velocity.x
 
     @property
-    def vy(self):
+    def vy(self) -> float:
+        """Returns the y-component of the ball's current velocity."""
         return self.body.velocity.y
 
     def throw(self, angle: float, velocity: float) -> None:
@@ -82,35 +91,38 @@ class Ball:
         self.body.apply_impulse_at_local_point((impulse_x, impulse_y), (0, 0))
         self.state = BallState.MOVING_IN_LANE
 
-    def update(self, dt: float) -> None:
-        """
-        Update the ball's position based on its velocity and time elapsed.
-
-        :param dt: Time elapsed since the last update, in seconds.
-        """
+    def update(self) -> None:
+        """Update the ball's state based on its position."""
         is_moving_in_lane = self.state == BallState.MOVING_IN_LANE
-        has_entered_left_gutter = self.x < consts.LEFT_BOUNDARY - consts.GUTTER_WIDTH / 2
-        has_entered_right_gutter = self.x > consts.RIGHT_BOUNDARY + consts.GUTTER_WIDTH / 2
+        has_entered_left_gutter = (
+            self.x < consts.LEFT_BOUNDARY - consts.GUTTER_WIDTH / 2
+        )
+        has_entered_right_gutter = (
+            self.x > consts.RIGHT_BOUNDARY + consts.GUTTER_WIDTH / 2
+        )
         has_entered_gutter = has_entered_left_gutter or has_entered_right_gutter
         is_finished = self.state == BallState.FINISHED
         in_gutter = self.state in (BallState.IN_LEFT_GUTTER, BallState.IN_RIGHT_GUTTER)
         if is_moving_in_lane:
-            # self.x += self.vx * dt
-            # self.y += self.vy * dt
-            if self.y > consts.LANE_LENGTH:  # When the ball reaches the top of the lane, stop it
+            # When the ball reaches the top of the lane, stop it
+            if self.y > consts.LANE_LENGTH:
                 self.state = BallState.FINISHED
                 # self.y = consts.LANE_LENGTH
                 # self.on_finish()
-            if has_entered_gutter:  # If the ball goes into the gutter, ...
+            # If the ball goes into the gutter, ...
+            if has_entered_gutter:
                 print(f"GUTTER! x={self.x}")
                 if has_entered_left_gutter:
                     self.state = BallState.IN_LEFT_GUTTER
                 if has_entered_right_gutter:
                     self.state = BallState.IN_RIGHT_GUTTER
-            if False:  # If the ball goes directly out of bounds, ...
+            # If the ball goes directly out of bounds, ...
+            if False:
                 self.state = BallState.OUT_OF_BOUNDS
         if in_gutter:
             # self.y += self.vy * dt  # Keep the ball moving vertically in the gutter
-            if self.y > consts.LANE_LENGTH:  # When the ball reaches the top of the lane, stop it
+            if (
+                self.y > consts.LANE_LENGTH
+            ):  # When the ball reaches the top of the lane, stop it
                 self.state = BallState.FINISHED
                 # self.y = consts.LANE_LENGTH
