@@ -11,13 +11,13 @@ class Pin:
     """
     Represents a bowling pin and its attributes.
 
-    :ivar HEIGHT: The height of the pin.
-    :ivar DIAMETER: The diameter of the pin.
-    :ivar RADIUS: The radius of the pin, derived from its diameter.
-    :ivar WEIGHT: The weight of the pin (currently undefined).
-    :ivar x: The x-coordinate of the pin's position.
-    :ivar y: The y-coordinate of the pin's position.
-    :ivar hit: Indicates whether the pin has been hit.
+    :ivar HEIGHT: The height of the pin in inches.
+    :ivar DIAMETER: The diameter of the pin in inches.
+    :ivar RADIUS: The radius of the pin in inches, derived from its diameter.
+    :ivar MASS: The weight of the pin, in kg.
+    :ivar removed: Indicates whether the pin has now been removed after being hit.
+    :ivar body: The pymunk Body of the pin.
+    :ivar shape: The pymunk Shape of the pin.
     """
 
     HEIGHT = 15  # inches
@@ -67,6 +67,7 @@ class Pin:
         return self.shape.collision_type == consts.HIT_PIN_ID
 
     def on_hit(self, arbiter: pymunk.Arbiter, space: pymunk.Space, data: Any) -> bool:  # noqa: ANN401
+        """Handles the collision of the pin with either the ball or another pin."""
         self.shape.collision_type = (
             consts.HIT_PIN_ID  # Signifies that the pin has already been hit, collision detection no longer needed
         )
@@ -80,15 +81,20 @@ class PinSet:
     """
     Represents a set of bowling pins arranged in a standard triangular formation.
 
-    It defines their positions and determines when they are hit by the bowling ball.
-
     :ivar space: References the pymunk Space the game exists in.
     :ivar pins_hit: Stores the number of pins the ball hit in the current throw.
     :ivar pins: List of pins in the pin set. Each pin's state and position are managed individually.
     """
 
     def __init__(self, space: pymunk.Space) -> None:
-        """Initialises the set of pins to their default state (not being hit) and position."""
+        """
+        Initalises the set of pins.
+
+        Intialises and stores the pins at their relevant positions, intialises collision handlers for each pin,
+        and adds each pin to the space.
+
+        :param space: The pymunk Space the game exists in.
+        """
         # Initialise other variables
         self.space = space
         self.pins_hit = 0
@@ -132,7 +138,7 @@ class PinSet:
             self.space.add(pin.body, pin.shape)
 
     def clean_up(self) -> None:
-        """Clean up pins that have been hit by marking them as removed."""
+        """Cleans up pins that have been hit by marking them as removed."""
         for pin in self.pins:
             if pin.hit:
                 pin.removed = True
