@@ -149,6 +149,52 @@ class BowlingGame:
             color = consts.RED if pin.hit else consts.BLACK
             pygame.draw.circle(self.screen, color, (x, y), PIN_SCREEN_RADIUS)
 
+    def handle_waiting_for_throw_state(self) -> None:
+        """Handles logic and pygame rendering when the game is waiting for the user to make a throw."""
+        # Set up scene
+        setup_bowling_scene(self.screen)
+        # Handle events
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.running = False
+                elif event.key == pygame.K_SPACE:
+                    self.ball.throw(self.throw_angle, 317.0)
+                elif event.key == pygame.K_LEFT:
+                    self.throw_angle -= 0.5
+                elif event.key == pygame.K_RIGHT:
+                    self.throw_angle += 0.5
+
+    def handle_end_of_throw_state(self) -> None:
+        """Handles logic and pygame rendering when the current throw has just ended."""
+        print(f"Pins hit: {self.pin_set.pins_hit}")
+        # If the frame has now finished after this throw
+        if self.score_keeper.add_throw(self.pin_set.pins_hit):
+            self.pin_set = PinSet()  # Reset pins
+            self.throw_angle = 0  # Reset throw angle
+            print(self.score_keeper)  # Show current game state TODO: Display on screen
+            self.frame_state = BowlingFrameState.END_OF_FRAME
+        else:
+            self.pin_set.clean_up()  # Remove knocked pins
+        self.ball = Ball()  # Reset ball
+        self.trajectory_line = TrajectoryLine(
+            self.ball, self.screen, self.throw_angle
+        )  # Reset trajectory line
+        self.pin_set.pins_hit = 0
+
+    def handle_end_of_frame_state(self) -> None:
+        """Handles logic and pygame rendering when the current frame has ended."""
+        self.screen.fill(consts.WHITE)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                self.frame_state = BowlingFrameState.WAITING_FOR_THROW
+        pygame.display.update()
+        self.space.step(1 / consts.FRAMES_PER_SECOND)
+
     def run(self) -> None:
         """
         Executes the main game loop.
@@ -170,39 +216,11 @@ class BowlingGame:
                 continue
             # If the game is waiting for the player to throw the ball
             if self.frame_state == BowlingFrameState.WAITING_FOR_THROW:
-                # Set up scene
-                setup_bowling_scene(self.screen)
-                # Handle events
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        self.running = False
-                    elif event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_ESCAPE:
-                            self.running = False
-                        elif event.key == pygame.K_SPACE:
-                            self.ball.throw(self.throw_angle, 317.0)
-                        elif event.key == pygame.K_LEFT:
-                            self.throw_angle -= 0.5
-                        elif event.key == pygame.K_RIGHT:
-                            self.throw_angle += 0.5
+                self.handle_waiting_for_throw_state()
                 if self.ball.state == BallState.STATIONARY:
                     self.trajectory_line.display()
                 elif self.ball.state == BallState.FINISHED:
-                    print(f"Pins hit: {self.pin_set.pins_hit}")
-                    if self.score_keeper.add_throw(self.pin_set.pins_hit):
-                        self.pin_set = PinSet()  # Reset pins
-                        self.throw_angle = 0  # Reset throw angle
-                        print(
-                            self.score_keeper
-                        )  # Show current game state TODO: Display on screen
-                        self.frame_state = BowlingFrameState.END_OF_FRAME
-                    else:
-                        self.pin_set.clean_up()
-                    self.ball = Ball()  # Reset ball
-                    self.trajectory_line = TrajectoryLine(
-                        self.ball, self.screen, self.throw_angle
-                    )  # Reset trajectory line
-                    self.pin_set.pins_hit = 0
+                    self.handle_end_of_throw_state()
                 # Display ball and pins
                 self.display_ball()
                 self.display_pins()
@@ -212,11 +230,4 @@ class BowlingGame:
                 self.space.step(1 / consts.FRAMES_PER_SECOND)
             # If the current frame has ended
             elif self.frame_state == BowlingFrameState.END_OF_FRAME:
-                self.screen.fill(consts.WHITE)
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        self.running = False
-                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                        self.frame_state = BowlingFrameState.WAITING_FOR_THROW
-                pygame.display.update()
-                self.space.step(1 / consts.FRAMES_PER_SECOND)
+                self.handle_end_of_frame_state()
